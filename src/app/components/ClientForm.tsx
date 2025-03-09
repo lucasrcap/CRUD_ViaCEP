@@ -8,6 +8,7 @@ interface ClienteFormProps {
 }
 
 const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
+  
   const [cliente, setCliente] = useState<Cliente>({
     id: 0,
     nome: '',
@@ -56,7 +57,6 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
               bairro: data.bairro || '',
               estado: data.uf || '',
               localidade: data.localidade || '',
-              complemento: data.complemento || '',
               // Formatar o CEP com o traço para exibição
               cep: `${cep.substring(0, 5)}-${cep.substring(5)}`,
             },
@@ -103,7 +103,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-4 text-center">Criar/Editar Cliente</h2>
+        <h2 className="text-lg font-semibold mb-4 text-center">Criar Cliente</h2>
         <input
           type="text"
           name="nome"
@@ -202,7 +202,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
           className="p-2 mb-2 border rounded w-full"
           required
         />
-        {<input
+        <input
           type="text"
           name="complemento"
           value={cliente.endereco.complemento}
@@ -210,7 +210,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
           placeholder="Complemento"
           className="p-2 mb-2 border rounded w-full"
           required
-        /> }
+        /> 
         <button type="submit" className="mt-4 bg-blue-500 text-white p-2 rounded w-full">
           Salvar Cliente
         </button>
