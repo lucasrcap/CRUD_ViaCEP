@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Cliente } from '../types/ClientD';
 import { isValidEmail, isValidTelefone } from '../utils/validators';
+import { estados } from '../utils/estados';
+import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 
 // Definindo o tipo para as props do ClienteForm
 interface ClienteFormProps {
@@ -90,6 +92,17 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
     }));
   };
 
+  const handleEstadoChange = (e: SelectChangeEvent<string>) => {
+    const { value } = e.target;
+    setCliente((prev) => ({
+      ...prev,
+      endereco: {
+        ...prev.endereco,
+        estado: value, // Estado alterado para o valor selecionado
+      },
+    }));
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -161,7 +174,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
           type="text"
           name="cep"
           value={cliente.endereco.cep}
-          onChange={handleCepChange} // Alteração aqui
+          onChange={handleCepChange}
           placeholder="CEP"
           className="p-2 mb-2 border rounded w-full"
           required
@@ -184,15 +197,24 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
           className="p-2 mb-2 border rounded w-full"
           required
         />
-        <input
-          type="text"
-          name="estado"
-          value={cliente.endereco.estado}
-          onChange={handleEnderecoChange}
-          placeholder="Estado"
-          className="p-2 mb-2 border rounded w-full"
-          required
-        />
+        <FormControl fullWidth className="mb-2">
+          <InputLabel id="estado-label">Estado</InputLabel>
+          <Select
+            labelId="estado-label"
+            id="estado"
+            name="estado"
+            value={cliente.endereco.estado}
+            onChange={handleEstadoChange}
+            label="Estado" 
+            required
+          >
+            {estados.map((estado) => (
+              <MenuItem key={estado.sigla} value={estado.sigla}>
+                {estado.nome}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <input
           type="text"
           name="localidade"
