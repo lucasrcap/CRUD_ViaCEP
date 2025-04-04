@@ -16,9 +16,10 @@ import {
   Grid,
   Button,
   Typography,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
+  FormHelperText,
+  Step,
+  StepLabel,
+  Stepper,
 } from "@mui/material";
 
 interface ClienteFormProps {
@@ -43,9 +44,19 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
     },
   });
 
-  const [showEndereco, setShowEndereco] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
+  const [activeStep, setActiveStep] = useState(0); // Estado para gerenciar as etapas
+  const [formErrors, setFormErrors] = useState<any>({
+    nome: false,
+    sobrenome: false,
+    email: false,
+    telefone: false,
+    dataNascimento: false,
+  }); // Estado para armazenar erros de validação para cada campo
+  const [isNextClicked, setIsNextClicked] = useState(false); // Estado para controlar quando o botão "Próxima" é pressionado
+
+  const steps = ["Informações Pessoais", "Informações de Endereço"]; // Definição das etapas
 
   // Função para manipular mudanças nos campos do cliente
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +66,6 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
       [name]: value,
     }));
   };
-
 
   // Função para manipular mudanças no endereço
   const handleEnderecoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,11 +82,8 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
   // Função para manipular a mudança do CEP
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     let cep = e.target.value;
-
-    // Remover o traço caso o usuário insira sem ele
     cep = cep.replace(/\D/g, ""); // Remove tudo que não seja número
 
-    // Atualize o estado do CEP sem o traço
     setCliente((prev) => ({
       ...prev,
       endereco: {
@@ -85,7 +92,6 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
       },
     }));
 
-    // Apenas busca o CEP se o CEP tiver 8 dígitos
     if (cep.length === 8) {
       try {
         const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
@@ -100,7 +106,6 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
               bairro: data.bairro || "",
               estado: data.uf || "",
               localidade: data.localidade || "",
-              // Formatar o CEP com o traço para exibição
               cep: `${cep.substring(0, 5)}-${cep.substring(5)}`,
             },
           }));
@@ -121,9 +126,47 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
       ...prev,
       endereco: {
         ...prev.endereco,
-        estado: value, // Estado alterado para o valor selecionado
+        estado: value,
       },
     }));
+  };
+
+  // Função chamada ao pressionar o botão "Próxima"
+  const handleNext = () => {
+    // Marcar que o botão "Próxima" foi clicado para exibir os erros
+    setIsNextClicked(true);
+
+    // Validação
+    let errors: any = {
+      nome: !cliente.nome,
+      sobrenome: !cliente.sobrenome,
+      email: !cliente.email,
+      telefone: !cliente.telefone,
+      dataNascimento: !cliente.dataNascimento,
+    };
+
+    // Validação de formato para email, telefone e data de nascimento
+    if (!isValidEmail(cliente.email)) {
+      errors.email = "Email inválido!";
+    }
+    if (!isValidTelefone(cliente.telefone)) {
+      errors.telefone = "Telefone inválido! Formato esperado: (XX) XXXXX-XXXX";
+    }
+    if (!isValidDataNascimento(cliente.dataNascimento)) {
+      errors.dataNascimento = "Data de nascimento inválida!";
+    }
+
+    setFormErrors(errors);
+
+    // Se houver erros, não avança para a próxima etapa
+    if (Object.values(errors).some((error) => error !== false)) {
+      setIsError(true);
+      return;
+    }
+
+    // Avançar para a próxima etapa
+    setIsError(false);
+    setActiveStep((prev) => prev + 1);
   };
 
   // Função de submit
@@ -138,9 +181,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
 
     if (!isValidTelefone(cliente.telefone)) {
       setIsError(true);
-      setFeedbackMessage(
-        "Telefone inválido! Formato esperado: (XX) XXXXX-XXXX"
-      );
+      setFeedbackMessage("Telefone inválido! Formato esperado: (XX) XXXXX-XXXX");
       return;
     }
 
@@ -153,12 +194,6 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
     setIsError(false);
     setFeedbackMessage("Cliente salvo com sucesso!");
     onSubmit(cliente);
-  };
-
-  // Manipulador para a seleção do radio
-  const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    setShowEndereco(value === "endereco");
   };
 
   return (
@@ -182,28 +217,17 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
           boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
         }}
       >
-        {/* Radio Buttons para alternar entre as seções */}
-        <RadioGroup
-          aria-labelledby="endereco-radio-group"
-          value={showEndereco ? "endereco" : "pessoal"}
-          onChange={handleRadioChange}
-          row
-          sx={{ marginBottom: "16px", justifyContent: "center" }}
-        >
-          <FormControlLabel
-            value="pessoal"
-            control={<Radio />}
-            label="Informações Pessoais"
-          />
-          <FormControlLabel
-            value="endereco"
-            control={<Radio />}
-            label="Informações de Endereço"
-          />
-        </RadioGroup>
+        {/* Stepper para navegação entre as etapas */}
+        <Stepper activeStep={activeStep} alternativeLabel>
+          {steps.map((step, index) => (
+            <Step key={index}>
+              <StepLabel>{step}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
 
         {/* Seção de Informações Pessoais */}
-        {!showEndereco && (
+        {activeStep === 0 && (
           <Box>
             <Typography variant="h6" align="center" gutterBottom>
               Informações Pessoais
@@ -217,8 +241,10 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   onChange={handleChange}
                   placeholder="Nome"
                   style={inputStyle}
-                  required
                 />
+                {isNextClicked && formErrors.nome && (
+                  <FormHelperText error>Nome é obrigatório</FormHelperText>
+                )}
               </Grid>
               <Grid item xs={12} sm={6}>
                 <input
@@ -228,8 +254,10 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   onChange={handleChange}
                   placeholder="Sobrenome"
                   style={inputStyle}
-                  required
                 />
+                {isNextClicked && formErrors.sobrenome && (
+                  <FormHelperText error>Sobrenome é obrigatório</FormHelperText>
+                )}
               </Grid>
               <Grid item xs={12}>
                 <input
@@ -239,8 +267,10 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   onChange={handleChange}
                   placeholder="Email"
                   style={inputStyle}
-                  required
                 />
+                {isNextClicked && formErrors.email && (
+                  <FormHelperText error>{formErrors.email}</FormHelperText>
+                )}
               </Grid>
               <Grid item xs={12}>
                 <input
@@ -250,8 +280,10 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   onChange={handleChange}
                   placeholder="Telefone"
                   style={inputStyle}
-                  required
                 />
+                {isNextClicked && formErrors.telefone && (
+                  <FormHelperText error>{formErrors.telefone}</FormHelperText>
+                )}
               </Grid>
               <Grid item xs={12}>
                 <input
@@ -261,15 +293,17 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   onChange={handleChange}
                   placeholder="Data de nascimento"
                   style={inputStyle}
-                  required
                 />
+                {isNextClicked && formErrors.dataNascimento && (
+                  <FormHelperText error>{formErrors.dataNascimento}</FormHelperText>
+                )}
               </Grid>
             </Grid>
           </Box>
         )}
 
-        {/* Seção de Informações de Endereço - Quando selecionado no radio */}
-        {showEndereco && (
+        {/* Seção de Informações de Endereço */}
+        {activeStep === 1 && (
           <Box>
             <Typography variant="h6" align="center" gutterBottom>
               Informações de Endereço
@@ -337,33 +371,58 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
               style={inputStyle}
               required
             />
-
-            {/* Exibindo a mensagem de erro ou sucesso */}
-            {feedbackMessage && (
-              <Typography
-                variant="body2"
-                align="center"
-                style={{
-                  marginTop: "16px",
-                  color: isError ? "red" : "green",
-                  fontWeight: "bold",
-                }}
-              >
-                {feedbackMessage}
-              </Typography>
-            )}
-
-            {/* Botão de Enviar */}
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
-              sx={{ marginTop: "24px" }}
-            >
-              Salvar Cliente
-            </Button>
           </Box>
+        )}
+
+        {/* Exibindo mensagem de erro ou sucesso */}
+        {feedbackMessage && (
+          <Typography
+            variant="body2"
+            align="center"
+            style={{
+              marginTop: "16px",
+              color: isError ? "red" : "green",
+              fontWeight: "bold",
+            }}
+          >
+            {feedbackMessage}
+          </Typography>
+        )}
+
+        {/* Navegação entre as etapas */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", marginTop: "16px" }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setActiveStep((prev) => prev - 1);
+              setIsNextClicked(false); // Resetando os erros ao voltar
+            }}
+            disabled={activeStep === 0}
+          >
+            Voltar
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleNext}
+            disabled={activeStep === steps.length - 1}
+          >
+            {activeStep === steps.length - 1 ? "Finalizar" : "Próxima"}
+          </Button>
+        </Box>
+
+        {/* Botão de Enviar */}
+        {activeStep === steps.length - 1 && (
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            fullWidth
+            sx={{ marginTop: "24px" }}
+          >
+            Salvar Cliente
+          </Button>
         )}
       </form>
     </Box>

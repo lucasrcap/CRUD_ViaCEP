@@ -4,22 +4,7 @@ import { Cliente } from '../../models/Cliente';
 import { buscarEnderecoPorCep } from '@/app/lib/cepAPI';
 
 let clientes: Cliente[] = [
-  {
-    id: 1,
-    nome: 'João',
-    sobrenome: 'Silva',
-    email: 'joao.silva@example.com',
-    dataNascimento: '1990-05-15',
-    endereco: {
-      cep: '01001-000',
-      logradouro: 'Rua A, 123',
-      bairro: 'Centro',
-      estado: 'SP',
-      localidade: 'São Bernardo do Campo',
-      complemento: 'Casa'
-    },
-    telefone: '(11) 99999-9999',
-  },
+  
 ];
 
 export async function GET() {
