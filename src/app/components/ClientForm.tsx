@@ -1,12 +1,10 @@
-import { useState } from "react";
-import { Cliente } from "../types/ClientD";
-import {
-  isValidDataNascimento,
-  isValidEmail,
-  isValidTelefone,
-} from "../utils/validators";
+import { useEffect, useState } from "react";
+import { Cliente } from "../models/Cliente";
+import {isValidDataNascimento, isValidEmail, isValidTelefone,} from "../utils/validators";
+import { maskDataNascimento, maskTelefoneCelular } from "../utils/formatters";
 import { estados } from "../utils/estados";
 import {
+  Alert,
   FormControl,
   InputLabel,
   Select,
@@ -16,7 +14,6 @@ import {
   Grid,
   Button,
   Typography,
-  FormHelperText,
   Step,
   StepLabel,
   Stepper,
@@ -46,6 +43,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
 
   const [feedbackMessage, setFeedbackMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
+  const [openAlert, setOpenAlert] = useState(false);
   const [activeStep, setActiveStep] = useState(0); // Estado para gerenciar as etapas
   const [formErrors, setFormErrors] = useState<any>({
     nome: false,
@@ -58,14 +56,31 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
 
   const steps = ["Informações Pessoais", "Informações de Endereço"]; // Definição das etapas
 
-  // Função para manipular mudanças nos campos do cliente
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+
+  // Se for o campo de telefone, aplica a máscara
+  if (name === "telefone") {
+    setCliente((prev) => ({
+      ...prev,
+      telefone: maskTelefoneCelular(value.replace(/\D/g, "")), // Remove qualquer caractere não numérico
+    }));
+  }
+
+  // Se for o campo de data de nascimento, aplica a máscara
+  else if (name === "dataNascimento") {
+    // Formata a data antes de salvar no estado
+    setCliente((prev) => ({
+      ...prev,
+      dataNascimento: maskDataNascimento(value),
+    }));
+  } else {
     setCliente((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }
+};
 
   // Função para manipular mudanças no endereço
   const handleEnderecoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,7 +196,9 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
 
     if (!isValidTelefone(cliente.telefone)) {
       setIsError(true);
-      setFeedbackMessage("Telefone inválido! Formato esperado: (XX) XXXXX-XXXX");
+      setFeedbackMessage(
+        "Telefone inválido! Formato esperado: (XX) XXXXX-XXXX"
+      );
       return;
     }
 
@@ -194,7 +211,37 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
     setIsError(false);
     setFeedbackMessage("Cliente salvo com sucesso!");
     onSubmit(cliente);
+    // Exibe o alerta de sucesso
+    setCliente({
+      id: 0,
+      nome: "",
+      sobrenome: "",
+      email: "",
+      dataNascimento: "",
+      telefone: "",
+      endereco: {
+        cep: "",
+        logradouro: "",
+        bairro: "",
+        estado: "",
+        localidade: "",
+        complemento: "",
+      },
+    });
+    setOpenAlert(true);
+    // Voltar para a etapa "Informações Pessoais"
+    setActiveStep(0);
   };
+
+  useEffect(() => {
+    if (feedbackMessage) {
+      const timer = setTimeout(() => {
+        setFeedbackMessage(""); // Limpa a mensagem depois de 3 segundos
+      }, 3000);
+
+      return () => clearTimeout(timer); // Limpa o timeout se o componente for desmontado antes
+    }
+  }, [feedbackMessage]);
 
   return (
     <Box
@@ -243,7 +290,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   style={inputStyle}
                 />
                 {isNextClicked && formErrors.nome && (
-                  <FormHelperText error>Nome é obrigatório</FormHelperText>
+                  <Alert severity="warning">Nome é obrigatório</Alert>
                 )}
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -256,7 +303,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   style={inputStyle}
                 />
                 {isNextClicked && formErrors.sobrenome && (
-                  <FormHelperText error>Sobrenome é obrigatório</FormHelperText>
+                  <Alert severity="warning">Sobrenome é obrigatório</Alert>
                 )}
               </Grid>
               <Grid item xs={12}>
@@ -269,7 +316,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   style={inputStyle}
                 />
                 {isNextClicked && formErrors.email && (
-                  <FormHelperText error>{formErrors.email}</FormHelperText>
+                  <Alert severity="error">{formErrors.email}</Alert>
                 )}
               </Grid>
               <Grid item xs={12}>
@@ -282,7 +329,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   style={inputStyle}
                 />
                 {isNextClicked && formErrors.telefone && (
-                  <FormHelperText error>{formErrors.telefone}</FormHelperText>
+                  <Alert severity="error">{formErrors.telefone}</Alert>
                 )}
               </Grid>
               <Grid item xs={12}>
@@ -295,10 +342,38 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
                   style={inputStyle}
                 />
                 {isNextClicked && formErrors.dataNascimento && (
-                  <FormHelperText error>{formErrors.dataNascimento}</FormHelperText>
+                  <Alert severity="error">{formErrors.dataNascimento}</Alert>
                 )}
               </Grid>
             </Grid>
+            {/* Botões da seção de informações pessoais */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: "16px",
+              }}
+            >
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() =>
+                  setCliente({
+                    ...cliente,
+                    nome: "",
+                    sobrenome: "",
+                    email: "",
+                    telefone: "",
+                    dataNascimento: "",
+                  })
+                }
+              >
+                Apagar
+              </Button>
+              <Button variant="contained" color="primary" onClick={handleNext}>
+                Próxima
+              </Button>
+            </Box>
           </Box>
         )}
 
@@ -369,60 +444,57 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
               onChange={handleEnderecoChange}
               placeholder="Complemento"
               style={inputStyle}
-              required
             />
+            {/* Botões da seção de informações de endereço */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: "16px",
+              }}
+            >
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => setActiveStep(0)} // Voltar para a seção de informações pessoais
+              >
+                Voltar
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() =>
+                  setCliente({
+                    ...cliente,
+                    endereco: {
+                      cep: "",
+                      logradouro: "",
+                      bairro: "",
+                      estado: "",
+                      localidade: "",
+                      complemento: "",
+                    },
+                  })
+                }
+              >
+                Apagar
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+              >
+                Salvar Cliente
+              </Button>
+            </Box>
           </Box>
         )}
 
         {/* Exibindo mensagem de erro ou sucesso */}
         {feedbackMessage && (
-          <Typography
-            variant="body2"
-            align="center"
-            style={{
-              marginTop: "16px",
-              color: isError ? "red" : "green",
-              fontWeight: "bold",
-            }}
-          >
+          <Alert severity={isError ? "error" : "success"} sx={{ mt: 2 }}>
             {feedbackMessage}
-          </Typography>
-        )}
-
-        {/* Navegação entre as etapas */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", marginTop: "16px" }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={() => {
-              setActiveStep((prev) => prev - 1);
-              setIsNextClicked(false); // Resetando os erros ao voltar
-            }}
-            disabled={activeStep === 0}
-          >
-            Voltar
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleNext}
-            disabled={activeStep === steps.length - 1}
-          >
-            {activeStep === steps.length - 1 ? "Finalizar" : "Próxima"}
-          </Button>
-        </Box>
-
-        {/* Botão de Enviar */}
-        {activeStep === steps.length - 1 && (
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ marginTop: "24px" }}
-          >
-            Salvar Cliente
-          </Button>
+          </Alert>
         )}
       </form>
     </Box>
@@ -439,3 +511,4 @@ const inputStyle = {
 };
 
 export default ClienteForm;
+

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import ClienteForm from '../app/components/ClientForm'; // Componente para criar e editar clientes
-import { Cliente } from '../app/types/ClientD'; // Interface de cliente
+import { Cliente } from './models/Cliente'; // Interface de cliente
 import { getClientes, createCliente } from '../app/lib/ClientAPI'; // Funções para buscar e criar clientes
-import { formatTelefone } from '../app/utils/formatters'; // Função de formatação de telefone
+import { maskTelefoneCelular } from '../app/utils/formatters'; // Função de formatação de telefone
 
 const Page = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -44,7 +44,9 @@ const Page = () => {
         <p>Carregando clientes...</p>
       ) : (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Lista de Clientes</h2>
+          {clientes.length > 0 && (
+            <h2 className="text-xl font-semibold mb-4">Lista de Clientes</h2>
+          )}
           <ul>
             {clientes.map((cliente) => (
               <li key={cliente.id} className="mb-4 p-4 border border-gray-300 rounded">
@@ -52,7 +54,7 @@ const Page = () => {
                   {cliente.nome} {cliente.sobrenome}
                 </h3>
                 <p><strong>Email:</strong> {cliente.email}</p>
-                <p><strong>Telefone:</strong> {formatTelefone(cliente.telefone)}</p>
+                <p><strong>Telefone:</strong> {maskTelefoneCelular(cliente.telefone)}</p>
                 <p><strong>Data de Nascimento:</strong> {cliente.dataNascimento}</p>
                 <div>
                   <h4 className="font-semibold">Endereço: </h4>

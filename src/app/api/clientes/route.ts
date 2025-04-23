@@ -1,7 +1,6 @@
 // src/app/api/clientes/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { Cliente } from '../../models/Cliente';
-import { buscarEnderecoPorCep } from '@/app/lib/cepAPI';
 
 let clientes: Cliente[] = [
   
@@ -23,15 +22,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const enderecoData = await buscarEnderecoPorCep(cep);
-    newCliente.endereco = {
-      cep: enderecoData.cep,
-      logradouro: enderecoData.logradouro,
-      bairro: enderecoData.bairro,
-      estado: enderecoData.uf,
-      localidade: enderecoData.localidade,
-      complemento: enderecoData.complemento,
-    };
 
     newCliente.id = clientes.length ? Math.max(...clientes.map((c) => c.id)) + 1 : 1;
 
