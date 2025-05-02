@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Cliente } from "../models/Cliente";
 import {isValidDataNascimento, isValidEmail, isValidTelefone,} from "../utils/validators";
-import { maskDataNascimento, maskTelefoneCelular } from "../utils/formatters";
+import { useHandleChange } from "../handlers/usehandleChange";
+import { useEnderecoChange } from "../handlers/useEnderecoChange";
+import { useCepChange } from "../handlers/useCepChange";
+import { useEstadoChange } from "../handlers/useEstadoChange";
+import { useHandleNext } from "../handlers/useHandleNext";
+import { useHandleSubmit } from "../handlers/useHandleSubmit";
+import { inputStyle } from "../styles/inputStyles";
 import { estados } from "../utils/estados";
 import {
   Alert,
@@ -18,6 +24,8 @@ import {
   StepLabel,
   Stepper,
 } from "@mui/material";
+
+
 
 interface ClienteFormProps {
   onSubmit: (cliente: Cliente) => void;
@@ -53,165 +61,30 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
     dataNascimento: false,
   }); // Estado para armazenar erros de validação para cada campo
   const [isNextClicked, setIsNextClicked] = useState(false); // Estado para controlar quando o botão "Próxima" é pressionado
-
   const steps = ["Informações Pessoais", "Informações de Endereço"]; // Definição das etapas
 
-const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const { name, value } = e.target;
+  const { handleChange } = useHandleChange(setCliente);
+  const { handleEnderecoChange } = useEnderecoChange(setCliente)
+  const { handleCepChange } = useCepChange(setCliente)
+  const { handleEstadoChange } = useEstadoChange(setCliente)
+  const { validateStepOne } = useHandleNext(); // Função chamada ao pressionar o botão "Próxima"
 
-  // Se for o campo de telefone, aplica a máscara
-  if (name === "telefone") {
-    setCliente((prev) => ({
-      ...prev,
-      telefone: maskTelefoneCelular(value.replace(/\D/g, "")), // Remove qualquer caractere não numérico
-    }));
-  }
-
-  // Se for o campo de data de nascimento, aplica a máscara
-  else if (name === "dataNascimento") {
-    // Formata a data antes de salvar no estado
-    setCliente((prev) => ({
-      ...prev,
-      dataNascimento: maskDataNascimento(value),
-    }));
-  } else {
-    setCliente((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-};
-
-  // Função para manipular mudanças no endereço
-  const handleEnderecoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCliente((prev) => ({
-      ...prev,
-      endereco: {
-        ...prev.endereco,
-        [name]: value,
-      },
-    }));
-  };
-
-  // Função para manipular a mudança do CEP
-  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    let cep = e.target.value;
-    cep = cep.replace(/\D/g, ""); // Remove tudo que não seja número
-
-    setCliente((prev) => ({
-      ...prev,
-      endereco: {
-        ...prev.endereco,
-        cep: cep,
-      },
-    }));
-
-    if (cep.length === 8) {
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-        const data = await response.json();
-
-        if (!data.erro) {
-          setCliente((prev) => ({
-            ...prev,
-            endereco: {
-              ...prev.endereco,
-              logradouro: data.logradouro || "",
-              bairro: data.bairro || "",
-              estado: data.uf || "",
-              localidade: data.localidade || "",
-              cep: `${cep.substring(0, 5)}-${cep.substring(5)}`,
-            },
-          }));
-        } else {
-          alert("CEP inválido");
-        }
-      } catch (error) {
-        console.error("Erro ao buscar CEP:", error);
-        alert("Erro ao buscar informações do CEP");
-      }
-    }
-  };
-
-  // Função para manipular a mudança no estado
-  const handleEstadoChange = (e: SelectChangeEvent<string>) => {
-    const { value } = e.target;
-    setCliente((prev) => ({
-      ...prev,
-      endereco: {
-        ...prev.endereco,
-        estado: value,
-      },
-    }));
-  };
-
-  // Função chamada ao pressionar o botão "Próxima"
   const handleNext = () => {
-    // Marcar que o botão "Próxima" foi clicado para exibir os erros
     setIsNextClicked(true);
+    const { isValid, errors } = validateStepOne(cliente);
 
-    // Validação
-    let errors: any = {
-      nome: !cliente.nome,
-      sobrenome: !cliente.sobrenome,
-      email: !cliente.email,
-      telefone: !cliente.telefone,
-      dataNascimento: !cliente.dataNascimento,
-    };
-
-    // Validação de formato para email, telefone e data de nascimento
-    if (!isValidEmail(cliente.email)) {
-      errors.email = "Email inválido!";
-    }
-    if (!isValidTelefone(cliente.telefone)) {
-      errors.telefone = "Telefone inválido! Formato esperado: (XX) XXXXX-XXXX";
-    }
-    if (!isValidDataNascimento(cliente.dataNascimento)) {
-      errors.dataNascimento = "Data de nascimento inválida!";
-    }
-
-    setFormErrors(errors);
-
-    // Se houver erros, não avança para a próxima etapa
-    if (Object.values(errors).some((error) => error !== false)) {
+  setFormErrors(errors);
+    if (!isValid) {
       setIsError(true);
       return;
     }
 
-    // Avançar para a próxima etapa
-    setIsError(false);
-    setActiveStep((prev) => prev + 1);
+  setIsError(false);
+  setActiveStep((prev) => prev + 1);
   };
 
   // Função de submit
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!isValidEmail(cliente.email)) {
-      setIsError(true);
-      setFeedbackMessage("Email inválido!");
-      return;
-    }
-
-    if (!isValidTelefone(cliente.telefone)) {
-      setIsError(true);
-      setFeedbackMessage(
-        "Telefone inválido! Formato esperado: (XX) XXXXX-XXXX"
-      );
-      return;
-    }
-
-    if (!isValidDataNascimento(cliente.dataNascimento)) {
-      setIsError(true);
-      setFeedbackMessage("Data de nascimento inválida!");
-      return;
-    }
-
-    setIsError(false);
-    setFeedbackMessage("Cliente salvo com sucesso!");
-    onSubmit(cliente);
-    // Exibe o alerta de sucesso
+  const resetCliente = () =>
     setCliente({
       id: 0,
       nome: "",
@@ -228,10 +101,16 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         complemento: "",
       },
     });
-    setOpenAlert(true);
-    // Voltar para a etapa "Informações Pessoais"
-    setActiveStep(0);
-  };
+  
+  const handleSubmit = useHandleSubmit({
+    cliente,
+    setIsError,
+    setFeedbackMessage,
+    onSubmit,
+    resetCliente,
+    setOpenAlert,
+    setActiveStep,
+  });
 
   useEffect(() => {
     if (feedbackMessage) {
@@ -501,14 +380,9 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   );
 };
 
-const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  marginBottom: "16px",
-  border: "1px solid #ccc",
-  borderRadius: "4px",
-  fontSize: "14px",
-};
-
 export default ClienteForm;
 
+//criar classe para os handle
+//excluir clientes
+//cor do header
+//um home com a pagina de registrar clientes, que levaria para a tela do cadastro

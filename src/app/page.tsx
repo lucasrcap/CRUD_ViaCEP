@@ -35,15 +35,17 @@ const Page = () => {
   }, []);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-center font-bold text-2xl mb-4">Gestão de Clientes</h1>
+    // <div className="container mx-auto p-1">
+    <div className="w-full h-screen p-1">
+      
+      <h1 className="text-center font-bold text-3xl text-blue-900 bg-blue-200 leading-relaxed">Gestão de Clientes</h1>
       
       <ClienteForm onSubmit={handleCreateCliente} />
 
       {loading ? (
         <p>Carregando clientes...</p>
       ) : (
-        <div>
+        <div className="bg-gray-200">
           {clientes.length > 0 && (
             <h2 className="text-xl font-semibold mb-4">Lista de Clientes</h2>
           )}
