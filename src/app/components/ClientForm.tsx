@@ -122,6 +122,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
     }
   }, [feedbackMessage]);
 
+
   return (
     <Box
       sx={{
@@ -381,8 +382,3 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
 };
 
 export default ClienteForm;
-
-//criar classe para os handle
-//excluir clientes
-//cor do header
-//um home com a pagina de registrar clientes, que levaria para a tela do cadastro

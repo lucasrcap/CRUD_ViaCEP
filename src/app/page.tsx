@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import ClienteForm from '../app/components/ClientForm'; // Componente para criar e editar clientes
 import { Cliente } from './models/Cliente'; // Interface de cliente
-import { getClientes, createCliente } from '../app/lib/ClientAPI'; // Funções para buscar e criar clientes
+import { getClientes, createCliente, deleteCliente } from '../app/lib/ClientAPI'; // Funções para buscar e criar clientes
 import { maskTelefoneCelular } from '../app/utils/formatters'; // Função de formatação de telefone
+import 'primeicons/primeicons.css'; 
 
 const Page = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -30,6 +31,18 @@ const Page = () => {
     }
   };
 
+  const handleDeleteCliente = async (id: number) => {
+    if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
+  
+    try {
+      await deleteCliente(id);
+      fetchClientes(); // Atualiza a lista após excluir
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
+    }
+  };
+  
+
   useEffect(() => {
     fetchClientes();
   }, []);
@@ -40,7 +53,7 @@ const Page = () => {
       
       <h1 className="text-center font-bold text-3xl text-blue-900 bg-blue-200 leading-relaxed">Gestão de Clientes</h1>
       
-      <ClienteForm onSubmit={handleCreateCliente} />
+      <ClienteForm onSubmit={handleCreateCliente}/>
 
       {loading ? (
         <p>Carregando clientes...</p>
@@ -51,7 +64,19 @@ const Page = () => {
           )}
           <ul>
             {clientes.map((cliente) => (
-              <li key={cliente.id} className="mb-4 p-4 border border-gray-300 rounded">
+              <li key={cliente.id} className=" relative mb-4 p-4 border border-gray-300 rounded bg-white shadow-sm">
+                <button
+                  className="absolute top-2 right-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                  onClick={() => handleDeleteCliente(cliente.id)}
+                >
+                  <i className="pi pi-trash"></i>
+                </button>
+                {/* <button
+                  className="absolute top-2 right-16 px-4 py-2 bg-blue-600 text-white rounded hover:bg-red-700"
+                  onClick={() => handleEditCliente(cliente.id)}
+                >
+                  <i className="pi pi-pencil"></i>
+                </button> */}
                 <h3 className="font-bold text-lg">
                   {cliente.nome} {cliente.sobrenome}
                 </h3>
@@ -67,6 +92,7 @@ const Page = () => {
                   <p><strong>Cidade</strong> {cliente.endereco.localidade}</p>
                   { <p><strong>Complemento</strong> {cliente.endereco.complemento}</p> }
                 </div>
+                
               </li>
             ))}
           </ul>
