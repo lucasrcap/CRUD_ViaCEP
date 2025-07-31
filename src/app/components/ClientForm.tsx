@@ -29,9 +29,11 @@ import {
 
 interface ClienteFormProps {
   onSubmit: (cliente: Cliente) => void;
+  clienteEditavel?: Cliente | null;
 }
 
-const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
+
+const ClienteForm = ({ onSubmit, clienteEditavel }: ClienteFormProps) => {
   const [cliente, setCliente] = useState<Cliente>({
     id: 0,
     nome: "",
@@ -48,6 +50,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
       complemento: "",
     },
   });
+  
 
   const [feedbackMessage, setFeedbackMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
@@ -63,11 +66,20 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
   const [isNextClicked, setIsNextClicked] = useState(false); // Estado para controlar quando o botão "Próxima" é pressionado
   const steps = ["Informações Pessoais", "Informações de Endereço"]; // Definição das etapas
 
+
   const { handleChange } = useHandleChange(setCliente);
   const { handleEnderecoChange } = useEnderecoChange(setCliente)
   const { handleCepChange } = useCepChange(setCliente)
   const { handleEstadoChange } = useEstadoChange(setCliente)
   const { validateStepOne } = useHandleNext(); // Função chamada ao pressionar o botão "Próxima"
+
+  // 🔁 Quando um cliente para edição for recebido, preenche o formulário
+  useEffect(() => {
+    if (clienteEditavel) {
+      setCliente(clienteEditavel);
+      setActiveStep(0);
+    }
+  }, [clienteEditavel]);
 
   const handleNext = () => {
     setIsNextClicked(true);
@@ -123,6 +135,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
   }, [feedbackMessage]);
 
 
+
   return (
     <Box
       sx={{
@@ -131,7 +144,7 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
         alignItems: "center",
         minHeight: "100vh",
         backgroundColor: "#f5f5f5",
-      }}
+      }} 
     >
       <form
         onSubmit={handleSubmit}
@@ -382,3 +395,4 @@ const ClienteForm = ({ onSubmit }: ClienteFormProps) => {
 };
 
 export default ClienteForm;
+

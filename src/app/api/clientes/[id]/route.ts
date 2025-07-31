@@ -39,3 +39,21 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   return NextResponse.json({ message: 'Cliente excluído com sucesso' });
 }
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const id = parseInt(params.id);
+  const updatedCliente: Cliente = await req.json();
+
+  const clientes = getClientesFromFile();
+  const clienteIndex = clientes.findIndex((cliente) => cliente.id === id);
+
+  if (clienteIndex === -1) {
+    return NextResponse.json({ message: 'Cliente não encontrado' }, { status: 404 });
+  }
+
+  // Substitui os dados do cliente
+  clientes[clienteIndex] = { ...updatedCliente, id };
+  saveClientesToFile(clientes);
+
+  return NextResponse.json({ message: 'Cliente atualizado com sucesso', cliente: clientes[clienteIndex] });
+}
