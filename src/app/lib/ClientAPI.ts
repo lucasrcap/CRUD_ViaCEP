@@ -49,7 +49,7 @@ export const createCliente = async (cliente: Cliente): Promise<Cliente> => {
 
 // Função para atualizar um cliente existente
 export const updateCliente = async (cliente: Cliente) => {
-  const response = await fetch(`/api/clientes/${cliente.id}`, {
+  const response = await fetch(`${API_URL}/${cliente.id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -74,6 +74,7 @@ export const deleteCliente = async (id: number): Promise<void> => {
     throw new Error('Erro ao excluir cliente');
   }
 };
+
 
 
 
