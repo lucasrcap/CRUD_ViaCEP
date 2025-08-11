@@ -11,7 +11,6 @@ export const useHandleNext = () => {
       sobrenome: !cliente.sobrenome,
       email: !cliente.email,
       telefone: !cliente.telefone,
-      dataNascimento: !cliente.dataNascimento,
     };
 
     if (!isValidEmail(cliente.email)) {

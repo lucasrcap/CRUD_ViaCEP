@@ -5,6 +5,7 @@ import { Cliente } from "./models/Cliente"; // Interface de cliente
 import {getClientes, createCliente, deleteCliente, updateCliente} from "../app/lib/ClientAPI"; // Funções para buscar e criar clientes
 import { maskTelefoneCelular } from "../app/utils/formatters"; // Função de formatação de telefone
 import "primeicons/primeicons.css";
+import { formatDateBR } from "./utils/validators";
 
 const Page = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -104,7 +105,7 @@ const Page = () => {
                 </h3>
                 <p><strong>Email:</strong> {cliente.email}</p>
                 <p><strong>Telefone:</strong>{" "}{maskTelefoneCelular(cliente.telefone)}</p>
-                <p><strong>Data de Nascimento:</strong> {cliente.dataNascimento}</p>
+                <p><strong>Data de Nascimento:</strong> {formatDateBR(cliente.dataNascimento)}</p>
                 <div>
                   <h4 className="font-semibold">Endereço: </h4>
                   <p><strong>CEP</strong> {cliente.endereco.cep}</p>

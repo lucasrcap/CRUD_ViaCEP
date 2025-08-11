@@ -83,6 +83,3 @@ export const deleteCliente = async (id: number): Promise<void> => {
 
 
 
-
-
-

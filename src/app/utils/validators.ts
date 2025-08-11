@@ -13,11 +13,17 @@ export const isValidTelefone = (telefone: string): boolean => {
 };
 
 // Função de validação para data de nascimento
-  export const isValidDataNascimento = (data: string): boolean => {
+  export const isValidDataNascimento = (data: Date): boolean => {
   const parsedDate = dayjs(data, "DD/MM/YYYY", true);
   // Verifica se a data está no formato válido "DD/MM/YYYY" ou "YYYY-MM-DD"
   const isValidDateFormat = parsedDate.isValid();
   const isBeforeToday = parsedDate.isBefore(dayjs(), 'day');
   // Verifica se a data é válida e se é anterior à data atual
   return isValidDateFormat && isBeforeToday;
+};
+
+// Função para formatar data no padrão brasileiro (dd/mm/yyyy)
+export const formatDateBR = (date: string | Date): string => {
+  if (!date) return '';
+  return dayjs(date).format('DD/MM/YYYY');
 };

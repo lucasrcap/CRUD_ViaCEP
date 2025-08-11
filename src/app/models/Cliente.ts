@@ -12,7 +12,7 @@ export interface Cliente {
   nome: string;
   sobrenome: string;
   email: string;
-  dataNascimento: string;
+  dataNascimento: string | Date;
   telefone: string;
   endereco: Endereco;
 }

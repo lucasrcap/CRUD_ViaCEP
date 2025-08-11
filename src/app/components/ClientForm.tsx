@@ -75,10 +75,13 @@ const ClienteForm = ({ onSubmit, clienteEditavel }: ClienteFormProps) => {
 
   // 🔁 Quando um cliente para edição for recebido, preenche o formulário
   useEffect(() => {
-    if (clienteEditavel) {
-      setCliente(clienteEditavel);
-      setActiveStep(0);
-    }
+  if (clienteEditavel) {
+    setCliente({
+      ...clienteEditavel,
+      dataNascimento: new Date(clienteEditavel.dataNascimento),
+    });
+    setActiveStep(0);
+  }
   }, [clienteEditavel]);
 
   const handleNext = () => {
@@ -115,7 +118,10 @@ const ClienteForm = ({ onSubmit, clienteEditavel }: ClienteFormProps) => {
     });
   
   const handleSubmit = useHandleSubmit({
-    cliente,
+    cliente: {
+      ...cliente,
+      dataNascimento: new Date(cliente.dataNascimento),
+    },
     setIsError,
     setFeedbackMessage,
     onSubmit,
@@ -227,10 +233,15 @@ const ClienteForm = ({ onSubmit, clienteEditavel }: ClienteFormProps) => {
               </Grid>
               <Grid item xs={12}>
                 <input
-                  type="text"
+                  type="date"
                   name="dataNascimento"
-                  value={cliente.dataNascimento}
-                  onChange={handleChange}
+                  value={cliente.dataNascimento  ? cliente.dataNascimento.toString().split("T")[0] : ""}
+                  onChange={(e) =>
+                    setCliente({
+                    ...cliente,
+                    dataNascimento: e.target.value,
+                    })
+                  }
                   placeholder="Data de nascimento"
                   style={inputStyle}
                 />
